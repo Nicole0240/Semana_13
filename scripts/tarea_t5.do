@@ -127,8 +127,9 @@ generate `ing_miles' = ingreso / 1000 // convierte los ingresos a miles de pesos
 summarize `ing_miles' // muestra un resumen de los ingresos expresados en miles de pesos
 
 * Resultados que se obtuvieron: se consideran 55 observaciones porque hay 5 ingresos faltantes
-* El ingreso promedio es de $655,29, la desviación estándar es de $209,91 y el ingreso mínimo es de $180.000 y el máximo de $1.093
-* Se utiliza tempvar para que esta variable temporal no quede guardada en la base de datos
+* El ingreso promedio es de 655,29 miles de pesos y la desviación estándar de 209,91 miles de pesos
+* El ingreso mínimo es de 180 mil pesos y el máximo de 1.093 mil pesos
+* Se utiliza tempvar para crear una variable temporal que stata elimina automáticamente cuando termina la ejecución del do-file
 
 
 * --- 7. Personas con ingresos mayores al umbral ---
@@ -206,3 +207,13 @@ putexcel B2 = matrix(resultados) // exporta los resultados de la matriz a Excel
 * Los resultados se exportaron correctamente al archivo Excel tarea_t5_por_sector.xlsx
 
 
+* --- 10. Interpretación general de los resultados ---
+
+* Los resultados muestran una relación positiva entre educación e ingreso
+* En el modelo 2, un año adicional de educación se asocia con un ingreso mayor de aproximadamente $42.246, manteniendo constantes las demás variables, al agregar la variable mujer, el coeficiente de educación aumenta levemente respecto al modelo 1
+*El coeficiente de mujer es negativo, pero no es estadísticamente significativo al 5 %
+* Por sector, Industria presenta el mayor coeficiente de educación y Construcción el menor
+* Los resultados por sector deben interpretarse con cuidado, ya que las muestras son pequeñas. Además, existen datos faltantes en la variable ingreso, por lo que no se utilizan todas las observaciones.
+* Estos resultados muestran relaciones entre las variables, pero no permiten afirmar que la educación cause directamente mayores ingresos.
+
+log close
