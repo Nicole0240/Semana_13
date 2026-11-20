@@ -1,70 +1,64 @@
------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
       name:  <unnamed>
-       log:  C:\Users\Ragnar Lothbrok\Documents\Fundamentos\Semana_13\output/
-> tarea_t5.log
+       log:  C:\Users\Ragnar Lothbrok\Documents\Fundamentos\Semana_13\output/ta
+> rea_t5.log
   log type:  text
- opened on:  19 Nov 2026, 14:54:41
+ opened on:  19 Nov 2026, 21:34:32
 
 . 
-end of do-file
-
-. do "C:\Users\RAGNAR~1\AppData\Local\Temp\STD314c_000000.tmp"
-
 . * --- 1. Parámetros de configuración ---
 . 
 . local datos "data/raw/casen_reducido.csv" // ubicación de la base de datos
 
 . local depvar "ingreso" // variable que quiero analizar
 
-. local numericas "ingreso educ edad experiencia" // variables numericas que 
-> usare para los descriptivos
+. local numericas "ingreso educ edad experiencia" // variables numericas que us
+> are para los descriptivos
 
-. local controles "educ experiencia" // variables que usare como controles en
->  las regresiones 
+. local controles "educ experiencia" // variables que usare como controles en l
+> as regresiones 
 
 . local grupos "sector region genero" // grupos que analizare por separado
 
 . 
-. global umbral = 500000 // valor de ingreso que usare como referencia para h
-> acer un filtro 
+. global umbral = 500000 // valor de ingreso que usare como referencia para hac
+> er un filtro 
 
 . 
-. * Usare macros locales para guardar datos que ocupare dentro de este do-fil
-> e
-. * Usare una macro global para el umbral porque también puede utilizarse en 
-> otros do-files
-. * De esta forma, si necesito cambiar algún dato puedo hacerlo directamente 
-> desde esta sección
+. * Usare macros locales para guardar datos que ocupare dentro de este do-file
+. * Usare una macro global para el umbral porque también puede utilizarse en ot
+> ros do-files
+. * De esta forma, si necesito cambiar algún dato puedo hacerlo directamente de
+> sde esta sección
 . 
 . * --- 2. Cargar y preparar los datos ---
 . 
-. import delimited "`datos'", clear varnames(1) encoding("utf-8") // carga la
->  base de datos usando la ruta que deje guardada al inicio (local datos)
+. import delimited "`datos'", clear varnames(1) encoding("utf-8") // carga la b
+> ase de datos usando la ruta que deje guardada al inicio (local datos)
 (6 vars, 60 obs)
 
 . 
-. generate experiencia = max(edad - educ - 6, 0) // calcula los años de exper
-> iencia, evitando que el resultado sea negativo
+. generate experiencia = max(edad - educ - 6, 0) // calcula los años de experie
+> ncia, evitando que el resultado sea negativo
 
 . 
-. label variable experiencia "Experiencia potencial (años)" // agrega una des
-> cripción a la variable
+. label variable experiencia "Experiencia potencial (años)" // agrega una descr
+> ipción a la variable
 
 . 
-. generate mujer = (genero == "F") if !missing(genero) // crea una variable q
-> ue identifica con 1 a las mujeres y con 0 a los hombres
+. generate mujer = (genero == "F") if !missing(genero) // crea una variable que
+>  identifica con 1 a las mujeres y con 0 a los hombres
 
 . 
-. label variable mujer "Mujer (1 = sí)" // agrega una descripción a la variab
-> le
+. label variable mujer "Mujer (1 = sí)" // agrega una descripción a la variable
 
 . 
-. label define mujer_etiqueta 0 "Hombre" 1 "Mujer" // define los nombres que 
-> tendrá cada valor
+. label define mujer_etiqueta 0 "Hombre" 1 "Mujer" // define los nombres que te
+> ndrá cada valor
 
 . 
-. label values mujer mujer_etiqueta // asigna los nombres anteriores a la var
-> iable mujer
+. label values mujer mujer_etiqueta // asigna los nombres anteriores a la varia
+> ble mujer
 
 . 
 . describe, short // muestra cuántas observaciones y variables tiene la base
@@ -77,19 +71,19 @@ Sorted by:
 
 . 
 . * La base comenzó con 60 observaciones y 6 variables
-. * Después de crear experiencia y mujer, quedó con 60 observaciones y 8 vari
-> ables
+. * Después de crear experiencia y mujer, quedó con 60 observaciones y 8 variab
+> les
 . 
 . 
 . * --- 3. Descriptivos de variables numéricas ---
 . 
 . foreach v of local numericas {
   2. 
-.     display _newline "===== Descriptivos de `v' =====" // muestra el nombre
->  de la variable que se estan revisando
+.     display _newline "===== Descriptivos de `v' =====" // muestra el nombre d
+> e la variable que se estan revisando
   3. 
-.     summarize `v', detail // muestra información más completa de la variabl
-> e, como su promedio, mínimo y máximo
+.     summarize `v', detail // muestra información más completa de la variable,
+>  como su promedio, mínimo y máximo
   4. }
 
 ===== Descriptivos de ingreso =====
@@ -163,13 +157,2052 @@ Sorted by:
 . 
 . * Los resultados que se han obtenido son:
 . * Ingreso: 55 observaciones, promedio de $655.290,9 y mediana de $672.000
-. * Educación: 60 observaciones, promedio de 12,73 años y mediana de 12,5 año
-> s
+. * Educación: 60 observaciones, promedio de 12,73 años y mediana de 12,5 años
 . * Edad: 60 observaciones, promedio de 44,52 años y mediana de 45,5 años
-. * Experiencia: 60 observaciones, promedio de 25,78 años y mediana de 27 año
+. * Experiencia: 60 observaciones, promedio de 25,78 años y mediana de 27 años
+. * En ingreso hay 5 datos faltantes, por eso se consideran solo 55 observacion
+> es
+. 
+. 
+. * --- 4. Personas segun tramos de educación ---
+. 
+. forvalues t = 4(4)20 {
+  2. 
+.     quietly count if educ >= `t' & educ < `t' + 4 // cuenta las personas que 
+> están dentro de cada tramo de educación
+  3. 
+.     display "Educación de `t' a " `t' + 3 " años: " r(N) " personas" // muest
+> ra cuántas personas hay en cada tramo
+  4. }
+Educación de 4 a 7 años: 4 personas
+Educación de 8 a 11 años: 19 personas
+Educación de 12 a 15 años: 25 personas
+Educación de 16 a 19 años: 10 personas
+Educación de 20 a 23 años: 2 personas
+
+. 
+. * Resultados que se obtuvieron: 4 personas tienen entre 4 y 7 años de educaci
+> ón,19 entre 8 y 11 años, 25 entre 12 y 15 años, 10 entre 16 y 19 años y 2 ent
+> re 20 y 23 años. En total se consideran las 60 personas de la base.
+. 
+. * --- 5. Programa de descriptivos por grupo ---
+. 
+. capture program drop descriptivos_grupo // elimina el programa anterior si ya
+>  existe, para evitar errores al ejecutarlo nuevamente
+
+. program define descriptivos_grupo
+  1.     display _newline "=== Descriptivos por `1' ===" // muestra el grupo qu
+> e estamos analizando
+  2.     tabulate `1' // muestra cuántas personas hay en cada categoría del gru
+> po
+  3.     tabstat ingreso educ, by(`1') statistics(mean sd n) // muestra el prom
+> edio, la desviación estándar y la cantidad de datos por grupo
+  4. end
+
+. * Aplicar el programa a los grupos definidos al inicio
+. 
+. foreach g of local grupos {
+  2.     descriptivos_grupo `g' // ejecuta el programa para cada grupo de la li
+> sta
+  3. }
+
+=== Descriptivos por sector ===
+
+       sector |      Freq.     Percent        Cum.
+--------------+-----------------------------------
+  Agricultura |         13       21.67       21.67
+     Comercio |          6       10.00       31.67
+ Construcción |          5        8.33       40.00
+    Educación |          8       13.33       53.33
+    Industria |         11       18.33       71.67
+    Servicios |         17       28.33      100.00
+--------------+-----------------------------------
+        Total |         60      100.00
+
+Summary statistics: Mean, SD, N
+Group variable: sector 
+
+       sector |   ingreso      educ
+--------------+--------------------
+  Agricultura |  447846.2  12.30769
+              |  156716.2  3.473342
+              |        13        13
+--------------+--------------------
+     Comercio |  523833.3  11.33333
+              |  135666.4  4.546061
+              |         6         6
+--------------+--------------------
+ Construcción |    520800        10
+              |  115694.4  3.391165
+              |         5         5
+--------------+--------------------
+    Educación |  908857.1     16.25
+              |  117920.1  2.434866
+              |         7         8
+--------------+--------------------
+    Industria |  697888.9  13.27273
+              |  154652.4  2.412091
+              |         9        11
+--------------+--------------------
+    Servicios |    788600  12.35294
+              |  112702.4  2.548067
+              |        15        17
+--------------+--------------------
+        Total |  655290.9  12.73333
+              |  209912.4  3.328697
+              |        55        60
+-----------------------------------
+
+=== Descriptivos por region ===
+
+       region |      Freq.     Percent        Cum.
+--------------+-----------------------------------
+    Araucanía |         11       18.33       18.33
+       Biobío |         10       16.67       35.00
+        Maule |         12       20.00       55.00
+Metropolitana |         12       20.00       75.00
+        Ñuble |         15       25.00      100.00
+--------------+-----------------------------------
+        Total |         60      100.00
+
+Summary statistics: Mean, SD, N
+Group variable: region 
+
+       region |   ingreso      educ
+--------------+--------------------
+    Araucanía |    638600  12.27273
+              |  238927.8   4.07654
+              |        10        11
+--------------+--------------------
+       Biobío |    633200      12.3
+              |  190041.4  2.110819
+              |        10        10
+--------------+--------------------
+        Maule |  659272.7  13.33333
+              |  217151.6  3.284491
+              |        11        12
+--------------+--------------------
+Metropolitana |  637636.4  12.91667
+              |  196989.5  3.315483
+              |        11        12
+--------------+--------------------
+        Ñuble |  696692.3  12.73333
+              |  232279.4  3.769552
+              |        13        15
+--------------+--------------------
+        Total |  655290.9  12.73333
+              |  209912.4  3.328697
+              |        55        60
+-----------------------------------
+
+=== Descriptivos por genero ===
+
+     genero |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          F |         29       48.33       48.33
+          M |         31       51.67      100.00
+------------+-----------------------------------
+      Total |         60      100.00
+
+Summary statistics: Mean, SD, N
+Group variable: genero 
+
+genero |   ingreso      educ
+-------+--------------------
+     F |  636296.3  12.96552
+       |  224593.3  3.458765
+       |        27        29
+-------+--------------------
+     M |  673607.1  12.51613
+       |  197088.3  3.244184
+       |        28        31
+-------+--------------------
+ Total |  655290.9  12.73333
+       |  209912.4  3.328697
+       |        55        60
+----------------------------
+
+. 
+. * Resultados obtenidos por sector:
+. * Agricultura: 13 personas, ingreso promedio de $447.846 y educación de 12,31
+>  años
+. * Comercio: 6 personas, ingreso promedio de $523.833 y educación de 11,33 año
 > s
-. * En ingreso hay 5 datos faltantes, por eso se consideran solo 55 observaci
-> ones
+. * Construcción: 5 personas, ingreso promedio de $520.800 y educación de 10 añ
+> os
+. * Educación: 8 personas, ingreso promedio de $908.857 y educación de 16,25 añ
+> os
+. * Industria: 11 personas, ingreso promedio de $697.889 y educación de 13,27 a
+> ños
+. * Servicios: 17 personas, ingreso promedio de $788.600 y educación de 12,35 a
+> ños
+. * Educación presenta el mayor ingreso promedio y Agricultura el menor.
+. * En algunos sectores hay datos de ingreso faltantes, por eso la cantidad usa
+> da para calcular el promedio puede ser menor
+. 
+. * Resultados obtenidos por región:
+. * Araucanía: 11 personas, ingreso promedio de $638.600 y educación de 12,27 a
+> ños
+. * Biobío: 10 personas, ingreso promedio de $633.200 y educación de 12,3 años
+. * Maule: 12 personas, ingreso promedio de $659.273 y educación de 13,33 años
+. * Metropolitana: 12 personas, ingreso promedio de $637.636 y educación de 12,
+> 92 años.
+. * Ñuble: 15 personas, ingreso promedio de $696.692 y educación de 12,73 años
+. * Ñuble presenta el mayor ingreso promedio entre las regiones analizadas
+. * También aquí hay algunos ingresos faltantes, por lo que los promedios consi
+> deran menos observaciones que el total de personas de cada región
+. 
+. * Resultados obtenidos por género:
+. * Mujeres: 29 personas, ingreso promedio de $636.296 y educación de 12,97 año
+> s
+. * Hombres: 31 personas, ingreso promedio de $673.607 y educación de 12,52 año
+> s
+. * En esta muestra, los hombres presentan un ingreso promedio mayor que las mu
+> jeres
+. * Para calcular los promedios de ingreso se consideran 27 mujeres y 28 hombre
+> s, debido a los datos faltantes
+. 
+. 
+. * --- 6. Variable temporal para trabajar con ingresos ---
+. 
+. tempvar ing_miles // crea una variable temporal que stata elimina automáticam
+> ente cuando termina el do-file
+
+. 
+. generate `ing_miles' = ingreso / 1000 // convierte los ingresos a miles de pe
+> sos
+(5 missing values generated)
+
+. 
+. summarize `ing_miles' // muestra un resumen de los ingresos expresados en mil
+> es de pesos
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+    __000000 |         55    655.2909    209.9124        180       1093
+
+. 
+. foreach g of local grupos {
+  2. 
+.     descriptivos_grupo `g' // ejecuta el programa para cada grupo de la lista
+  3. }
+
+=== Descriptivos por sector ===
+
+       sector |      Freq.     Percent        Cum.
+--------------+-----------------------------------
+  Agricultura |         13       21.67       21.67
+     Comercio |          6       10.00       31.67
+ Construcción |          5        8.33       40.00
+    Educación |          8       13.33       53.33
+    Industria |         11       18.33       71.67
+    Servicios |         17       28.33      100.00
+--------------+-----------------------------------
+        Total |         60      100.00
+
+Summary statistics: Mean, SD, N
+Group variable: sector 
+
+       sector |   ingreso      educ
+--------------+--------------------
+  Agricultura |  447846.2  12.30769
+              |  156716.2  3.473342
+              |        13        13
+--------------+--------------------
+     Comercio |  523833.3  11.33333
+              |  135666.4  4.546061
+              |         6         6
+--------------+--------------------
+ Construcción |    520800        10
+              |  115694.4  3.391165
+              |         5         5
+--------------+--------------------
+    Educación |  908857.1     16.25
+              |  117920.1  2.434866
+              |         7         8
+--------------+--------------------
+    Industria |  697888.9  13.27273
+              |  154652.4  2.412091
+              |         9        11
+--------------+--------------------
+    Servicios |    788600  12.35294
+              |  112702.4  2.548067
+              |        15        17
+--------------+--------------------
+        Total |  655290.9  12.73333
+              |  209912.4  3.328697
+              |        55        60
+-----------------------------------
+
+=== Descriptivos por region ===
+
+       region |      Freq.     Percent        Cum.
+--------------+-----------------------------------
+    Araucanía |         11       18.33       18.33
+       Biobío |         10       16.67       35.00
+        Maule |         12       20.00       55.00
+Metropolitana |         12       20.00       75.00
+        Ñuble |         15       25.00      100.00
+--------------+-----------------------------------
+        Total |         60      100.00
+
+Summary statistics: Mean, SD, N
+Group variable: region 
+
+       region |   ingreso      educ
+--------------+--------------------
+    Araucanía |    638600  12.27273
+              |  238927.8   4.07654
+              |        10        11
+--------------+--------------------
+       Biobío |    633200      12.3
+              |  190041.4  2.110819
+              |        10        10
+--------------+--------------------
+        Maule |  659272.7  13.33333
+              |  217151.6  3.284491
+              |        11        12
+--------------+--------------------
+Metropolitana |  637636.4  12.91667
+              |  196989.5  3.315483
+              |        11        12
+--------------+--------------------
+        Ñuble |  696692.3  12.73333
+              |  232279.4  3.769552
+              |        13        15
+--------------+--------------------
+        Total |  655290.9  12.73333
+              |  209912.4  3.328697
+              |        55        60
+-----------------------------------
+
+=== Descriptivos por genero ===
+
+     genero |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          F |         29       48.33       48.33
+          M |         31       51.67      100.00
+------------+-----------------------------------
+      Total |         60      100.00
+
+Summary statistics: Mean, SD, N
+Group variable: genero 
+
+genero |   ingreso      educ
+-------+--------------------
+     F |  636296.3  12.96552
+       |  224593.3  3.458765
+       |        27        29
+-------+--------------------
+     M |  673607.1  12.51613
+       |  197088.3  3.244184
+       |        28        31
+-------+--------------------
+ Total |  655290.9  12.73333
+       |  209912.4  3.328697
+       |        55        60
+----------------------------
+
+. 
+. * Resultados que se obtuvieron: se consideran 55 observaciones porque hay 5 i
+> ngresos faltantes
+. * El ingreso promedio es de $655,29, la desviación estándar es de $209,91 y e
+> l ingreso mínimo es de $180.000 y el máximo de $1.093
+. * Se utiliza tempvar para que esta variable temporal no quede guardada en la 
+> base de datos
+. 
+. 
+. * --- 7. Personas con ingresos mayores al umbral ---
+. 
+. count if ingreso > $umbral & !missing(ingreso) // cuenta las personas que tie
+> nen ingresos mayores al valor definido al inicio, excluyendo los datos faltan
+> tes
+  41
+
+. * Se utiliza !missing(ingreso) para excluir los ingresos faltantes, sin esta 
+> condición, stata podria contar los valores faltantes como si fueran mayores a
+> l umbral que utiliza el valor de $500.000 que se definio en los parametros de
+> l inicio, porque los considera superiores a cualquier número
+. 
+. 
+. 
+. * --- 8. Modelos de regresión ---
+. 
+. quietly regress `depvar' `controles' // estima el primer modelo usando ingres
+> o como variable dependiente y educación y experiencia como controles donde lo
+> s analiza 
+
+. 
+. estimates store m1 // guarda los resultados del primer modelo
+
+. 
+. quietly regress `depvar' `controles' i.mujer // estima el segundo modelo agre
+> gando el género como variable explicativa, la cual es la variable mujer para 
+> considerar las diferencias de ingreso según género
+
+. 
+. estimates store m2 // guarda los resultados del segundo modelo
+
+. 
+. estimates table m1 m2, b(%9.0f) se stats(N r2) stfmt(%5.3f) // compara los co
+> eficientes, errores estándar, cantidad de observaciones y R cuadrado de ambos
+>  modelos mostrando los resultados de m1 y m2
+
+--------------------------------------
+    Variable |    m1          m2      
+-------------+------------------------
+        educ |     42019       42246  
+             |      6393        6355  
+ experiencia |      -115        -517  
+             |      1415        1440  
+             |
+       mujer |
+      Mujer  |                -55686  
+             |                 43302  
+             |
+       _cons |    124160      158713  
+             |     94837       98002  
+-------------+------------------------
+           N |        55          55  
+          r2 |     0.458       0.475  
+--------------------------------------
+                          Legend: b/se
+
+. 
+. display "Coeficiente de educación: " _b[educ] // muestra el coeficiente de ed
+> ucación del segundo modelo, ya que el display esta despues de la segunda regr
+> esión
+Coeficiente de educación: 42245.764
+
+. 
+. 
+. 
+. * --- 9. Regresión por sector y exportación de resultados ---
+. 
+. levelsof sector, local(sectores) // obtiene los nombres de los sectores y los
+>  guarda en una macro local
+`"Agricultura"' `"Comercio"' `"Construcción"' `"Educación"' `"Industria"' `"Ser
+> vicios"'
+
+. 
+. local n : word count `sectores' // cuenta cuántos sectores hay
+
+. 
+. matrix resultados = J(`n', 3, .) // crea una matriz con una fila por sector y
+>  tres columnas para guardar los resultados
+
+. 
+. local i = 1 // indica la primera fila de la matriz
+
+. 
+. foreach s of local sectores { // foreach estima una regresión para cada secto
+> r
+  2. 
+.     quietly regress ingreso educ if sector == "`s'" // estima la relación ent
+> re ingreso y educación para cada sector
+  3. 
+.     matrix resultados[`i', 1] = _b[educ] // guarda el coeficiente de educació
+> n
+  4.     matrix resultados[`i', 2] = _se[educ] // guarda el error estándar del 
+> coeficiente
+  5.     matrix resultados[`i', 3] = e(N) // guarda la cantidad de observacione
+> s utilizadas
+  6. 
+.     local ++i // pasa a la siguiente fila de la matriz
+  7. }
+
+. 
+. putexcel set "output/tarea_t5_por_sector.xlsx", replace // crea el archivo Ex
+> cel y reemplaza uno anterior si existe
+
+. 
+. putexcel A1 = "Sector" B1 = "Coeficiente educación" C1 = "Error estándar" D1 
+> = "Observaciones" // escribe los encabezados de las columnas
+expression "Sector" must be enclosed in ()
+r(198);
+
+end of do-file
+
+r(198);
+
+. do "C:\Users\RAGNAR~1\AppData\Local\Temp\STD5680_000000.tmp"
+
+. local datos "data/raw/casen_reducido.csv" // ubicación de la base de datos
+
+. local depvar "ingreso" // variable que quiero analizar
+
+. local numericas "ingreso educ edad experiencia" // variables numericas que us
+> are para los descriptivos
+
+. local controles "educ experiencia" // variables que usare como controles en l
+> as regresiones 
+
+. local grupos "sector region genero" // grupos que analizare por separado
+
+. 
+. global umbral = 500000 // valor de ingreso que usare como referencia para hac
+> er un filtro 
+
+. 
+. * Usare macros locales para guardar datos que ocupare dentro de este do-file
+. * Usare una macro global para el umbral porque también puede utilizarse en ot
+> ros do-files
+. * De esta forma, si necesito cambiar algún dato puedo hacerlo directamente de
+> sde esta sección
+. 
+. * --- 2. Cargar y preparar los datos ---
+. 
+. import delimited "`datos'", clear varnames(1) encoding("utf-8") // carga la b
+> ase de datos usando la ruta que deje guardada al inicio (local datos)
+(6 vars, 60 obs)
+
+. 
+. generate experiencia = max(edad - educ - 6, 0) // calcula los años de experie
+> ncia, evitando que el resultado sea negativo
+
+. 
+. label variable experiencia "Experiencia potencial (años)" // agrega una descr
+> ipción a la variable
+
+. 
+. generate mujer = (genero == "F") if !missing(genero) // crea una variable que
+>  identifica con 1 a las mujeres y con 0 a los hombres
+
+. 
+. label variable mujer "Mujer (1 = sí)" // agrega una descripción a la variable
+
+. 
+. label define mujer_etiqueta 0 "Hombre" 1 "Mujer" // define los nombres que te
+> ndrá cada valor
+
+. 
+. label values mujer mujer_etiqueta // asigna los nombres anteriores a la varia
+> ble mujer
+
+. 
+. describe, short // muestra cuántas observaciones y variables tiene la base
+
+Contains data
+ Observations:            60                  
+    Variables:             8                  
+Sorted by: 
+     Note: Dataset has changed since last saved.
+
+. 
+. * La base comenzó con 60 observaciones y 6 variables
+. * Después de crear experiencia y mujer, quedó con 60 observaciones y 8 variab
+> les
+. 
+. 
+. * --- 3. Descriptivos de variables numéricas ---
+. 
+. foreach v of local numericas {
+  2. 
+.     display _newline "===== Descriptivos de `v' =====" // muestra el nombre d
+> e la variable que se estan revisando
+  3. 
+.     summarize `v', detail // muestra información más completa de la variable,
+>  como su promedio, mínimo y máximo
+  4. }
+
+===== Descriptivos de ingreso =====
+
+                           ingreso
+-------------------------------------------------------------
+      Percentiles      Smallest
+ 1%       180000         180000
+ 5%       276000         226000
+10%       384000         276000       Obs                  55
+25%       497000         363000       Sum of wgt.          55
+
+50%       672000                      Mean           655290.9
+                        Largest       Std. dev.      209912.4
+75%       807000         959000
+90%       948000         975000       Variance       4.41e+10
+95%       975000         987000       Skewness      -.1743242
+99%      1093000        1093000       Kurtosis       2.407897
+
+===== Descriptivos de educ =====
+
+                            educ
+-------------------------------------------------------------
+      Percentiles      Smallest
+ 1%            6              6
+ 5%            7              7
+10%            9              7       Obs                  60
+25%         10.5              7       Sum of wgt.          60
+
+50%         12.5                      Mean           12.73333
+                        Largest       Std. dev.      3.328697
+75%           15             18
+90%           17             19       Variance       11.08023
+95%         18.5             20       Skewness       .1798646
+99%           20             20       Kurtosis       2.493514
+
+===== Descriptivos de edad =====
+
+                            edad
+-------------------------------------------------------------
+      Percentiles      Smallest
+ 1%           20             20
+ 5%         21.5             20
+10%         22.5             21       Obs                  60
+25%           32             22       Sum of wgt.          60
+
+50%         45.5                      Mean           44.51667
+                        Largest       Std. dev.      15.15959
+75%         57.5             68
+90%           64             69       Variance       229.8133
+95%         68.5             69       Skewness      -.0681735
+99%           70             70       Kurtosis       1.791894
+
+===== Descriptivos de experiencia =====
+
+                Experiencia potencial (años)
+-------------------------------------------------------------
+      Percentiles      Smallest
+ 1%            0              0
+ 5%            3              2
+10%            5              2       Obs                  60
+25%         10.5              4       Sum of wgt.          60
+
+50%           27                      Mean           25.78333
+                        Largest       Std. dev.       15.3182
+75%           36             48
+90%           47             50       Variance       234.6472
+95%           49             52       Skewness      -.0345026
+99%           53             53       Kurtosis       1.783916
+
+. 
+. * Los resultados que se han obtenido son:
+. * Ingreso: 55 observaciones, promedio de $655.290,9 y mediana de $672.000
+. * Educación: 60 observaciones, promedio de 12,73 años y mediana de 12,5 años
+. * Edad: 60 observaciones, promedio de 44,52 años y mediana de 45,5 años
+. * Experiencia: 60 observaciones, promedio de 25,78 años y mediana de 27 años
+. * En ingreso hay 5 datos faltantes, por eso se consideran solo 55 observacion
+> es
+. 
+. 
+. * --- 4. Personas segun tramos de educación ---
+. 
+. forvalues t = 4(4)20 {
+  2. 
+.     quietly count if educ >= `t' & educ < `t' + 4 // cuenta las personas que 
+> están dentro de cada tramo de educación
+  3. 
+.     display "Educación de `t' a " `t' + 3 " años: " r(N) " personas" // muest
+> ra cuántas personas hay en cada tramo
+  4. }
+Educación de 4 a 7 años: 4 personas
+Educación de 8 a 11 años: 19 personas
+Educación de 12 a 15 años: 25 personas
+Educación de 16 a 19 años: 10 personas
+Educación de 20 a 23 años: 2 personas
+
+. 
+. * Resultados que se obtuvieron: 4 personas tienen entre 4 y 7 años de educaci
+> ón,19 entre 8 y 11 años, 25 entre 12 y 15 años, 10 entre 16 y 19 años y 2 ent
+> re 20 y 23 años. En total se consideran las 60 personas de la base.
+. 
+. * --- 5. Programa de descriptivos por grupo ---
+. 
+. capture program drop descriptivos_grupo // elimina el programa anterior si ya
+>  existe, para evitar errores al ejecutarlo nuevamente
+
+. program define descriptivos_grupo
+  1.     display _newline "=== Descriptivos por `1' ===" // muestra el grupo qu
+> e estamos analizando
+  2.     tabulate `1' // muestra cuántas personas hay en cada categoría del gru
+> po
+  3.     tabstat ingreso educ, by(`1') statistics(mean sd n) // muestra el prom
+> edio, la desviación estándar y la cantidad de datos por grupo
+  4. end
+
+. * Aplicar el programa a los grupos definidos al inicio
+. 
+. foreach g of local grupos {
+  2.     descriptivos_grupo `g' // ejecuta el programa para cada grupo de la li
+> sta
+  3. }
+
+=== Descriptivos por sector ===
+
+       sector |      Freq.     Percent        Cum.
+--------------+-----------------------------------
+  Agricultura |         13       21.67       21.67
+     Comercio |          6       10.00       31.67
+ Construcción |          5        8.33       40.00
+    Educación |          8       13.33       53.33
+    Industria |         11       18.33       71.67
+    Servicios |         17       28.33      100.00
+--------------+-----------------------------------
+        Total |         60      100.00
+
+Summary statistics: Mean, SD, N
+Group variable: sector 
+
+       sector |   ingreso      educ
+--------------+--------------------
+  Agricultura |  447846.2  12.30769
+              |  156716.2  3.473342
+              |        13        13
+--------------+--------------------
+     Comercio |  523833.3  11.33333
+              |  135666.4  4.546061
+              |         6         6
+--------------+--------------------
+ Construcción |    520800        10
+              |  115694.4  3.391165
+              |         5         5
+--------------+--------------------
+    Educación |  908857.1     16.25
+              |  117920.1  2.434866
+              |         7         8
+--------------+--------------------
+    Industria |  697888.9  13.27273
+              |  154652.4  2.412091
+              |         9        11
+--------------+--------------------
+    Servicios |    788600  12.35294
+              |  112702.4  2.548067
+              |        15        17
+--------------+--------------------
+        Total |  655290.9  12.73333
+              |  209912.4  3.328697
+              |        55        60
+-----------------------------------
+
+=== Descriptivos por region ===
+
+       region |      Freq.     Percent        Cum.
+--------------+-----------------------------------
+    Araucanía |         11       18.33       18.33
+       Biobío |         10       16.67       35.00
+        Maule |         12       20.00       55.00
+Metropolitana |         12       20.00       75.00
+        Ñuble |         15       25.00      100.00
+--------------+-----------------------------------
+        Total |         60      100.00
+
+Summary statistics: Mean, SD, N
+Group variable: region 
+
+       region |   ingreso      educ
+--------------+--------------------
+    Araucanía |    638600  12.27273
+              |  238927.8   4.07654
+              |        10        11
+--------------+--------------------
+       Biobío |    633200      12.3
+              |  190041.4  2.110819
+              |        10        10
+--------------+--------------------
+        Maule |  659272.7  13.33333
+              |  217151.6  3.284491
+              |        11        12
+--------------+--------------------
+Metropolitana |  637636.4  12.91667
+              |  196989.5  3.315483
+              |        11        12
+--------------+--------------------
+        Ñuble |  696692.3  12.73333
+              |  232279.4  3.769552
+              |        13        15
+--------------+--------------------
+        Total |  655290.9  12.73333
+              |  209912.4  3.328697
+              |        55        60
+-----------------------------------
+
+=== Descriptivos por genero ===
+
+     genero |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          F |         29       48.33       48.33
+          M |         31       51.67      100.00
+------------+-----------------------------------
+      Total |         60      100.00
+
+Summary statistics: Mean, SD, N
+Group variable: genero 
+
+genero |   ingreso      educ
+-------+--------------------
+     F |  636296.3  12.96552
+       |  224593.3  3.458765
+       |        27        29
+-------+--------------------
+     M |  673607.1  12.51613
+       |  197088.3  3.244184
+       |        28        31
+-------+--------------------
+ Total |  655290.9  12.73333
+       |  209912.4  3.328697
+       |        55        60
+----------------------------
+
+. 
+. * Resultados obtenidos por sector:
+. * Agricultura: 13 personas, ingreso promedio de $447.846 y educación de 12,31
+>  años
+. * Comercio: 6 personas, ingreso promedio de $523.833 y educación de 11,33 año
+> s
+. * Construcción: 5 personas, ingreso promedio de $520.800 y educación de 10 añ
+> os
+. * Educación: 8 personas, ingreso promedio de $908.857 y educación de 16,25 añ
+> os
+. * Industria: 11 personas, ingreso promedio de $697.889 y educación de 13,27 a
+> ños
+. * Servicios: 17 personas, ingreso promedio de $788.600 y educación de 12,35 a
+> ños
+. * Educación presenta el mayor ingreso promedio y Agricultura el menor.
+. * En algunos sectores hay datos de ingreso faltantes, por eso la cantidad usa
+> da para calcular el promedio puede ser menor
+. 
+. * Resultados obtenidos por región:
+. * Araucanía: 11 personas, ingreso promedio de $638.600 y educación de 12,27 a
+> ños
+. * Biobío: 10 personas, ingreso promedio de $633.200 y educación de 12,3 años
+. * Maule: 12 personas, ingreso promedio de $659.273 y educación de 13,33 años
+. * Metropolitana: 12 personas, ingreso promedio de $637.636 y educación de 12,
+> 92 años.
+. * Ñuble: 15 personas, ingreso promedio de $696.692 y educación de 12,73 años
+. * Ñuble presenta el mayor ingreso promedio entre las regiones analizadas
+. * También aquí hay algunos ingresos faltantes, por lo que los promedios consi
+> deran menos observaciones que el total de personas de cada región
+. 
+. * Resultados obtenidos por género:
+. * Mujeres: 29 personas, ingreso promedio de $636.296 y educación de 12,97 año
+> s
+. * Hombres: 31 personas, ingreso promedio de $673.607 y educación de 12,52 año
+> s
+. * En esta muestra, los hombres presentan un ingreso promedio mayor que las mu
+> jeres
+. * Para calcular los promedios de ingreso se consideran 27 mujeres y 28 hombre
+> s, debido a los datos faltantes
+. 
+. 
+. * --- 6. Variable temporal para trabajar con ingresos ---
+. 
+. tempvar ing_miles // crea una variable temporal que stata elimina automáticam
+> ente cuando termina el do-file
+
+. 
+. generate `ing_miles' = ingreso / 1000 // convierte los ingresos a miles de pe
+> sos
+(5 missing values generated)
+
+. 
+. summarize `ing_miles' // muestra un resumen de los ingresos expresados en mil
+> es de pesos
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+    __000000 |         55    655.2909    209.9124        180       1093
+
+. 
+. * Resultados que se obtuvieron: se consideran 55 observaciones porque hay 5 i
+> ngresos faltantes
+. * El ingreso promedio es de $655,29, la desviación estándar es de $209,91 y e
+> l ingreso mínimo es de $180.000 y el máximo de $1.093
+. * Se utiliza tempvar para que esta variable temporal no quede guardada en la 
+> base de datos
+. 
+. 
+. * --- 7. Personas con ingresos mayores al umbral ---
+. 
+. count if ingreso > $umbral & !missing(ingreso) // cuenta las personas que tie
+> nen ingresos mayores al valor definido al inicio, excluyendo los datos faltan
+> tes
+  41
+
+. * Resultados que se obtuvieron: 41 personas tienen ingresos superiores a $500
+> .000
+. * Se excluyen los 5 ingresos faltantes, por lo que el conteo considera solo d
+> atos disponibles.
+. * Se utiliza !missing(ingreso) para excluir los ingresos faltantes, sin esta 
+> condición, stata podria contar los valores faltantes como si fueran mayores a
+> l umbral que utiliza el valor de $500.000 que se definio en los parametros de
+> l inicio, porque los considera superiores a cualquier número
+. 
+. 
+. * --- 8. Modelos de regresión ---
+. 
+. quietly regress `depvar' `controles' // estima el primer modelo usando ingres
+> o como variable dependiente y educación y experiencia como controles donde lo
+> s analiza 
+
+. 
+. estimates store m1 // guarda los resultados del primer modelo
+
+. 
+. quietly regress `depvar' `controles' i.mujer // estima el segundo modelo agre
+> gando el género como variable explicativa, la cual es la variable mujer para 
+> considerar las diferencias de ingreso según género
+
+. 
+. estimates store m2 // guarda los resultados del segundo modelo
+
+. 
+. estimates table m1 m2, b(%9.0f) se stats(N r2) stfmt(%5.3f) // compara los co
+> eficientes, errores estándar, cantidad de observaciones y R cuadrado de ambos
+>  modelos mostrando los resultados de m1 y m2
+
+--------------------------------------
+    Variable |    m1          m2      
+-------------+------------------------
+        educ |     42019       42246  
+             |      6393        6355  
+ experiencia |      -115        -517  
+             |      1415        1440  
+             |
+       mujer |
+      Mujer  |                -55686  
+             |                 43302  
+             |
+       _cons |    124160      158713  
+             |     94837       98002  
+-------------+------------------------
+           N |        55          55  
+          r2 |     0.458       0.475  
+--------------------------------------
+                          Legend: b/se
+
+. 
+. display "Coeficiente de educación: " _b[educ] // muestra el coeficiente de ed
+> ucación del segundo modelo, ya que el display esta despues de la segunda regr
+> esión
+Coeficiente de educación: 42245.764
+
+. 
+. * Resultados que se obtuvieron:
+. * En el modelo 1, educación presenta un coeficiente de $42.019, mientras que 
+> en el modelo 2, el coeficiente aumenta a $42.246 al agregar la variable mujer
+. * Esto quiere decir que un año adicional de educación se relaciona con un ing
+> reso mayor, manteniendo constantes las demas variables
+. * En el segundo modelo, el coeficiente de mujer es -$55.686, lo que significa
+>  un ingreso estimado menor respecto de los hombres
+. * El R cuadrado aumenta de 0,458 a 0,475, por lo que el segundo modelo explic
+> a una proporción ligeramente mayor de las diferencias de ingreso
+. * Ambos modelos consideran 55 observaciones
+. 
+. 
+. 
+. * --- 9. Regresión por sector y exportación de resultados ---
+. 
+. levelsof sector, local(sectores) // obtiene los nombres de los sectores y los
+>  guarda en una macro local
+`"Agricultura"' `"Comercio"' `"Construcción"' `"Educación"' `"Industria"' `"Ser
+> vicios"'
+
+. 
+. local n : word count `sectores' // cuenta cuántos sectores hay
+
+. 
+. matrix resultados = J(`n', 3, .) // crea una matriz con una fila por sector y
+>  tres columnas para guardar los resultados
+
+. 
+. local i = 1 // indica la primera fila de la matriz
+
+. 
+. foreach s of local sectores {
+  2. 
+.     quietly regress ingreso educ if sector == "`s'" // estima la relación ent
+> re ingreso y educación para cada sector
+  3. 
+.     matrix resultados[`i', 1] = _b[educ] // guarda el coeficiente de educació
+> n
+  4.     matrix resultados[`i', 2] = _se[educ] // guarda el error estándar del 
+> coeficiente
+  5.     matrix resultados[`i', 3] = e(N) // guarda la cantidad de observacione
+> s utilizadas
+  6. 
+.     local ++i // pasa a la siguiente fila de la matriz
+  7. }
+
+. 
+. putexcel set "output/tarea_t5_por_sector.xlsx", replace // crea el archivo Ex
+> cel y reemplaza uno anterior si existe
+note: file will be replaced when the first putexcel command is issued.
+
+. 
+. putexcel A1=("Sector") B1=("Coeficiente educación") C1=("Error estándar") D1=
+> ("Observaciones") // escribe los encabezados de las columnas
+file output/tarea_t5_por_sector.xlsx saved
+
+. 
+. local i = 2 // indica la segunda fila de Excel, después de los encabezados
+
+. 
+. foreach s of local sectores {
+  2.     putexcel A`i' = ("`s'") // escribe el nombre del sector
+  3.     local ++i // pasa a la siguiente fila de Excel
+  4. }
+file output/tarea_t5_por_sector.xlsx saved
+file output/tarea_t5_por_sector.xlsx saved
+file output/tarea_t5_por_sector.xlsx saved
+file output/tarea_t5_por_sector.xlsx saved
+file output/tarea_t5_por_sector.xlsx saved
+file output/tarea_t5_por_sector.xlsx saved
+
+. 
+. putexcel B2 = matrix(resultados) // exporta los resultados de la matriz a Exc
+> el
+file output/tarea_t5_por_sector.xlsx saved
+
+. 
+end of do-file
+
+. do "C:\Users\RAGNAR~1\AppData\Local\Temp\STD5680_000000.tmp"
+
+. local datos "data/raw/casen_reducido.csv" // ubicación de la base de datos
+
+. local depvar "ingreso" // variable que quiero analizar
+
+. local numericas "ingreso educ edad experiencia" // variables numericas que us
+> are para los descriptivos
+
+. local controles "educ experiencia" // variables que usare como controles en l
+> as regresiones 
+
+. local grupos "sector region genero" // grupos que analizare por separado
+
+. 
+. global umbral = 500000 // valor de ingreso que usare como referencia para hac
+> er un filtro 
+
+. 
+. * Usare macros locales para guardar datos que ocupare dentro de este do-file
+. * Usare una macro global para el umbral porque también puede utilizarse en ot
+> ros do-files
+. * De esta forma, si necesito cambiar algún dato puedo hacerlo directamente de
+> sde esta sección
+. 
+. * --- 2. Cargar y preparar los datos ---
+. 
+. import delimited "`datos'", clear varnames(1) encoding("utf-8") // carga la b
+> ase de datos usando la ruta que deje guardada al inicio (local datos)
+(6 vars, 60 obs)
+
+. 
+. generate experiencia = max(edad - educ - 6, 0) // calcula los años de experie
+> ncia, evitando que el resultado sea negativo
+
+. 
+. label variable experiencia "Experiencia potencial (años)" // agrega una descr
+> ipción a la variable
+
+. 
+. generate mujer = (genero == "F") if !missing(genero) // crea una variable que
+>  identifica con 1 a las mujeres y con 0 a los hombres
+
+. 
+. label variable mujer "Mujer (1 = sí)" // agrega una descripción a la variable
+
+. 
+. label define mujer_etiqueta 0 "Hombre" 1 "Mujer" // define los nombres que te
+> ndrá cada valor
+
+. 
+. label values mujer mujer_etiqueta // asigna los nombres anteriores a la varia
+> ble mujer
+
+. 
+. describe, short // muestra cuántas observaciones y variables tiene la base
+
+Contains data
+ Observations:            60                  
+    Variables:             8                  
+Sorted by: 
+     Note: Dataset has changed since last saved.
+
+. 
+. * La base comenzó con 60 observaciones y 6 variables
+. * Después de crear experiencia y mujer, quedó con 60 observaciones y 8 variab
+> les
+. 
+. 
+. * --- 3. Descriptivos de variables numéricas ---
+. 
+. foreach v of local numericas {
+  2. 
+.     display _newline "===== Descriptivos de `v' =====" // muestra el nombre d
+> e la variable que se estan revisando
+  3. 
+.     summarize `v', detail // muestra información más completa de la variable,
+>  como su promedio, mínimo y máximo
+  4. }
+
+===== Descriptivos de ingreso =====
+
+                           ingreso
+-------------------------------------------------------------
+      Percentiles      Smallest
+ 1%       180000         180000
+ 5%       276000         226000
+10%       384000         276000       Obs                  55
+25%       497000         363000       Sum of wgt.          55
+
+50%       672000                      Mean           655290.9
+                        Largest       Std. dev.      209912.4
+75%       807000         959000
+90%       948000         975000       Variance       4.41e+10
+95%       975000         987000       Skewness      -.1743242
+99%      1093000        1093000       Kurtosis       2.407897
+
+===== Descriptivos de educ =====
+
+                            educ
+-------------------------------------------------------------
+      Percentiles      Smallest
+ 1%            6              6
+ 5%            7              7
+10%            9              7       Obs                  60
+25%         10.5              7       Sum of wgt.          60
+
+50%         12.5                      Mean           12.73333
+                        Largest       Std. dev.      3.328697
+75%           15             18
+90%           17             19       Variance       11.08023
+95%         18.5             20       Skewness       .1798646
+99%           20             20       Kurtosis       2.493514
+
+===== Descriptivos de edad =====
+
+                            edad
+-------------------------------------------------------------
+      Percentiles      Smallest
+ 1%           20             20
+ 5%         21.5             20
+10%         22.5             21       Obs                  60
+25%           32             22       Sum of wgt.          60
+
+50%         45.5                      Mean           44.51667
+                        Largest       Std. dev.      15.15959
+75%         57.5             68
+90%           64             69       Variance       229.8133
+95%         68.5             69       Skewness      -.0681735
+99%           70             70       Kurtosis       1.791894
+
+===== Descriptivos de experiencia =====
+
+                Experiencia potencial (años)
+-------------------------------------------------------------
+      Percentiles      Smallest
+ 1%            0              0
+ 5%            3              2
+10%            5              2       Obs                  60
+25%         10.5              4       Sum of wgt.          60
+
+50%           27                      Mean           25.78333
+                        Largest       Std. dev.       15.3182
+75%           36             48
+90%           47             50       Variance       234.6472
+95%           49             52       Skewness      -.0345026
+99%           53             53       Kurtosis       1.783916
+
+. 
+. * Los resultados que se han obtenido son:
+. * Ingreso: 55 observaciones, promedio de $655.290,9 y mediana de $672.000
+. * Educación: 60 observaciones, promedio de 12,73 años y mediana de 12,5 años
+. * Edad: 60 observaciones, promedio de 44,52 años y mediana de 45,5 años
+. * Experiencia: 60 observaciones, promedio de 25,78 años y mediana de 27 años
+. * En ingreso hay 5 datos faltantes, por eso se consideran solo 55 observacion
+> es
+. 
+. 
+. * --- 4. Personas segun tramos de educación ---
+. 
+. forvalues t = 4(4)20 {
+  2. 
+.     quietly count if educ >= `t' & educ < `t' + 4 // cuenta las personas que 
+> están dentro de cada tramo de educación
+  3. 
+.     display "Educación de `t' a " `t' + 3 " años: " r(N) " personas" // muest
+> ra cuántas personas hay en cada tramo
+  4. }
+Educación de 4 a 7 años: 4 personas
+Educación de 8 a 11 años: 19 personas
+Educación de 12 a 15 años: 25 personas
+Educación de 16 a 19 años: 10 personas
+Educación de 20 a 23 años: 2 personas
+
+. 
+. * Resultados que se obtuvieron: 4 personas tienen entre 4 y 7 años de educaci
+> ón,19 entre 8 y 11 años, 25 entre 12 y 15 años, 10 entre 16 y 19 años y 2 ent
+> re 20 y 23 años. En total se consideran las 60 personas de la base.
+. 
+. * --- 5. Programa de descriptivos por grupo ---
+. 
+. capture program drop descriptivos_grupo // elimina el programa anterior si ya
+>  existe, para evitar errores al ejecutarlo nuevamente
+
+. program define descriptivos_grupo
+  1.     display _newline "=== Descriptivos por `1' ===" // muestra el grupo qu
+> e estamos analizando
+  2.     tabulate `1' // muestra cuántas personas hay en cada categoría del gru
+> po
+  3.     tabstat ingreso educ, by(`1') statistics(mean sd n) // muestra el prom
+> edio, la desviación estándar y la cantidad de datos por grupo
+  4. end
+
+. * Aplicar el programa a los grupos definidos al inicio
+. 
+. foreach g of local grupos {
+  2.     descriptivos_grupo `g' // ejecuta el programa para cada grupo de la li
+> sta
+  3. }
+
+=== Descriptivos por sector ===
+
+       sector |      Freq.     Percent        Cum.
+--------------+-----------------------------------
+  Agricultura |         13       21.67       21.67
+     Comercio |          6       10.00       31.67
+ Construcción |          5        8.33       40.00
+    Educación |          8       13.33       53.33
+    Industria |         11       18.33       71.67
+    Servicios |         17       28.33      100.00
+--------------+-----------------------------------
+        Total |         60      100.00
+
+Summary statistics: Mean, SD, N
+Group variable: sector 
+
+       sector |   ingreso      educ
+--------------+--------------------
+  Agricultura |  447846.2  12.30769
+              |  156716.2  3.473342
+              |        13        13
+--------------+--------------------
+     Comercio |  523833.3  11.33333
+              |  135666.4  4.546061
+              |         6         6
+--------------+--------------------
+ Construcción |    520800        10
+              |  115694.4  3.391165
+              |         5         5
+--------------+--------------------
+    Educación |  908857.1     16.25
+              |  117920.1  2.434866
+              |         7         8
+--------------+--------------------
+    Industria |  697888.9  13.27273
+              |  154652.4  2.412091
+              |         9        11
+--------------+--------------------
+    Servicios |    788600  12.35294
+              |  112702.4  2.548067
+              |        15        17
+--------------+--------------------
+        Total |  655290.9  12.73333
+              |  209912.4  3.328697
+              |        55        60
+-----------------------------------
+
+=== Descriptivos por region ===
+
+       region |      Freq.     Percent        Cum.
+--------------+-----------------------------------
+    Araucanía |         11       18.33       18.33
+       Biobío |         10       16.67       35.00
+        Maule |         12       20.00       55.00
+Metropolitana |         12       20.00       75.00
+        Ñuble |         15       25.00      100.00
+--------------+-----------------------------------
+        Total |         60      100.00
+
+Summary statistics: Mean, SD, N
+Group variable: region 
+
+       region |   ingreso      educ
+--------------+--------------------
+    Araucanía |    638600  12.27273
+              |  238927.8   4.07654
+              |        10        11
+--------------+--------------------
+       Biobío |    633200      12.3
+              |  190041.4  2.110819
+              |        10        10
+--------------+--------------------
+        Maule |  659272.7  13.33333
+              |  217151.6  3.284491
+              |        11        12
+--------------+--------------------
+Metropolitana |  637636.4  12.91667
+              |  196989.5  3.315483
+              |        11        12
+--------------+--------------------
+        Ñuble |  696692.3  12.73333
+              |  232279.4  3.769552
+              |        13        15
+--------------+--------------------
+        Total |  655290.9  12.73333
+              |  209912.4  3.328697
+              |        55        60
+-----------------------------------
+
+=== Descriptivos por genero ===
+
+     genero |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          F |         29       48.33       48.33
+          M |         31       51.67      100.00
+------------+-----------------------------------
+      Total |         60      100.00
+
+Summary statistics: Mean, SD, N
+Group variable: genero 
+
+genero |   ingreso      educ
+-------+--------------------
+     F |  636296.3  12.96552
+       |  224593.3  3.458765
+       |        27        29
+-------+--------------------
+     M |  673607.1  12.51613
+       |  197088.3  3.244184
+       |        28        31
+-------+--------------------
+ Total |  655290.9  12.73333
+       |  209912.4  3.328697
+       |        55        60
+----------------------------
+
+. 
+. * Resultados obtenidos por sector:
+. * Agricultura: 13 personas, ingreso promedio de $447.846 y educación de 12,31
+>  años
+. * Comercio: 6 personas, ingreso promedio de $523.833 y educación de 11,33 año
+> s
+. * Construcción: 5 personas, ingreso promedio de $520.800 y educación de 10 añ
+> os
+. * Educación: 8 personas, ingreso promedio de $908.857 y educación de 16,25 añ
+> os
+. * Industria: 11 personas, ingreso promedio de $697.889 y educación de 13,27 a
+> ños
+. * Servicios: 17 personas, ingreso promedio de $788.600 y educación de 12,35 a
+> ños
+. * Educación presenta el mayor ingreso promedio y Agricultura el menor.
+. * En algunos sectores hay datos de ingreso faltantes, por eso la cantidad usa
+> da para calcular el promedio puede ser menor
+. 
+. * Resultados obtenidos por región:
+. * Araucanía: 11 personas, ingreso promedio de $638.600 y educación de 12,27 a
+> ños
+. * Biobío: 10 personas, ingreso promedio de $633.200 y educación de 12,3 años
+. * Maule: 12 personas, ingreso promedio de $659.273 y educación de 13,33 años
+. * Metropolitana: 12 personas, ingreso promedio de $637.636 y educación de 12,
+> 92 años.
+. * Ñuble: 15 personas, ingreso promedio de $696.692 y educación de 12,73 años
+. * Ñuble presenta el mayor ingreso promedio entre las regiones analizadas
+. * También aquí hay algunos ingresos faltantes, por lo que los promedios consi
+> deran menos observaciones que el total de personas de cada región
+. 
+. * Resultados obtenidos por género:
+. * Mujeres: 29 personas, ingreso promedio de $636.296 y educación de 12,97 año
+> s
+. * Hombres: 31 personas, ingreso promedio de $673.607 y educación de 12,52 año
+> s
+. * En esta muestra, los hombres presentan un ingreso promedio mayor que las mu
+> jeres
+. * Para calcular los promedios de ingreso se consideran 27 mujeres y 28 hombre
+> s, debido a los datos faltantes
+. 
+. 
+. * --- 6. Variable temporal para trabajar con ingresos ---
+. 
+. tempvar ing_miles // crea una variable temporal que stata elimina automáticam
+> ente cuando termina el do-file
+
+. 
+. generate `ing_miles' = ingreso / 1000 // convierte los ingresos a miles de pe
+> sos
+(5 missing values generated)
+
+. 
+. summarize `ing_miles' // muestra un resumen de los ingresos expresados en mil
+> es de pesos
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+    __000000 |         55    655.2909    209.9124        180       1093
+
+. 
+. * Resultados que se obtuvieron: se consideran 55 observaciones porque hay 5 i
+> ngresos faltantes
+. * El ingreso promedio es de $655,29, la desviación estándar es de $209,91 y e
+> l ingreso mínimo es de $180.000 y el máximo de $1.093
+. * Se utiliza tempvar para que esta variable temporal no quede guardada en la 
+> base de datos
+. 
+. 
+. * --- 7. Personas con ingresos mayores al umbral ---
+. 
+. count if ingreso > $umbral & !missing(ingreso) // cuenta las personas que tie
+> nen ingresos mayores al valor definido al inicio, excluyendo los datos faltan
+> tes
+  41
+
+. * Resultados que se obtuvieron: 41 personas tienen ingresos superiores a $500
+> .000
+. * Se excluyen los 5 ingresos faltantes, por lo que el conteo considera solo d
+> atos disponibles.
+. * Se utiliza !missing(ingreso) para excluir los ingresos faltantes, sin esta 
+> condición, stata podria contar los valores faltantes como si fueran mayores a
+> l umbral que utiliza el valor de $500.000 que se definio en los parametros de
+> l inicio, porque los considera superiores a cualquier número
+. 
+. 
+. * --- 8. Modelos de regresión ---
+. 
+. quietly regress `depvar' `controles' // estima el primer modelo usando ingres
+> o como variable dependiente y educación y experiencia como controles donde lo
+> s analiza 
+
+. 
+. estimates store m1 // guarda los resultados del primer modelo
+
+. 
+. quietly regress `depvar' `controles' i.mujer // estima el segundo modelo agre
+> gando el género como variable explicativa, la cual es la variable mujer para 
+> considerar las diferencias de ingreso según género
+
+. 
+. estimates store m2 // guarda los resultados del segundo modelo
+
+. 
+. estimates table m1 m2, b(%9.0f) se stats(N r2) stfmt(%5.3f) // compara los co
+> eficientes, errores estándar, cantidad de observaciones y R cuadrado de ambos
+>  modelos mostrando los resultados de m1 y m2
+
+--------------------------------------
+    Variable |    m1          m2      
+-------------+------------------------
+        educ |     42019       42246  
+             |      6393        6355  
+ experiencia |      -115        -517  
+             |      1415        1440  
+             |
+       mujer |
+      Mujer  |                -55686  
+             |                 43302  
+             |
+       _cons |    124160      158713  
+             |     94837       98002  
+-------------+------------------------
+           N |        55          55  
+          r2 |     0.458       0.475  
+--------------------------------------
+                          Legend: b/se
+
+. 
+. display "Coeficiente de educación: " _b[educ] // muestra el coeficiente de ed
+> ucación del segundo modelo, ya que el display esta despues de la segunda regr
+> esión
+Coeficiente de educación: 42245.764
+
+. 
+. * Resultados que se obtuvieron:
+. * En el modelo 1, educación presenta un coeficiente de $42.019, mientras que 
+> en el modelo 2, el coeficiente aumenta a $42.246 al agregar la variable mujer
+. * Esto quiere decir que un año adicional de educación se relaciona con un ing
+> reso mayor, manteniendo constantes las demas variables
+. * En el segundo modelo, el coeficiente de mujer es -$55.686, lo que significa
+>  un ingreso estimado menor respecto de los hombres
+. * El R cuadrado aumenta de 0,458 a 0,475, por lo que el segundo modelo explic
+> a una proporción ligeramente mayor de las diferencias de ingreso
+. * Ambos modelos consideran 55 observaciones
+. * El coeficiente de mujer no es estadísticamente significativo al 5 %, por lo
+>  que no se puede afirmar que exista una diferencia significativa de ingresos 
+> por género en este modelo
+. 
+. 
+. 
+. * --- 9. Regresión por sector y exportación de resultados ---
+. 
+. levelsof sector, local(sectores) // obtiene los nombres de los sectores y los
+>  guarda en una macro local
+`"Agricultura"' `"Comercio"' `"Construcción"' `"Educación"' `"Industria"' `"Ser
+> vicios"'
+
+. 
+. local n : word count `sectores' // cuenta cuántos sectores hay
+
+. 
+. matrix resultados = J(`n', 3, .) // crea una matriz con una fila por sector y
+>  tres columnas para guardar los resultados
+
+. 
+. local i = 1 // indica la primera fila de la matriz
+
+. 
+. foreach s of local sectores {
+  2. 
+.     quietly regress ingreso educ if sector == "`s'" // estima la relación ent
+> re ingreso y educación para cada sector
+  3. 
+.     matrix resultados[`i', 1] = _b[educ] // guarda el coeficiente de educació
+> n
+  4.     matrix resultados[`i', 2] = _se[educ] // guarda el error estándar del 
+> coeficiente
+  5.     matrix resultados[`i', 3] = e(N) // guarda la cantidad de observacione
+> s utilizadas
+  6. 
+.     local ++i // pasa a la siguiente fila de la matriz
+  7. }
+
+. 
+. putexcel set "output/tarea_t5_por_sector.xlsx", replace // crea el archivo Ex
+> cel y reemplaza uno anterior si existe
+file output/tarea_t5_por_sector.xlsx is open in another application
+r(603);
+
+end of do-file
+
+r(603);
+
+. do "C:\Users\RAGNAR~1\AppData\Local\Temp\STD5680_000000.tmp"
+
+. local datos "data/raw/casen_reducido.csv" // ubicación de la base de datos
+
+. local depvar "ingreso" // variable que quiero analizar
+
+. local numericas "ingreso educ edad experiencia" // variables numericas que us
+> are para los descriptivos
+
+. local controles "educ experiencia" // variables que usare como controles en l
+> as regresiones 
+
+. local grupos "sector region genero" // grupos que analizare por separado
+
+. 
+. global umbral = 500000 // valor de ingreso que usare como referencia para hac
+> er un filtro 
+
+. 
+. * Usare macros locales para guardar datos que ocupare dentro de este do-file
+. * Usare una macro global para el umbral porque también puede utilizarse en ot
+> ros do-files
+. * De esta forma, si necesito cambiar algún dato puedo hacerlo directamente de
+> sde esta sección
+. 
+. * --- 2. Cargar y preparar los datos ---
+. 
+. import delimited "`datos'", clear varnames(1) encoding("utf-8") // carga la b
+> ase de datos usando la ruta que deje guardada al inicio (local datos)
+(6 vars, 60 obs)
+
+. 
+. generate experiencia = max(edad - educ - 6, 0) // calcula los años de experie
+> ncia, evitando que el resultado sea negativo
+
+. 
+. label variable experiencia "Experiencia potencial (años)" // agrega una descr
+> ipción a la variable
+
+. 
+. generate mujer = (genero == "F") if !missing(genero) // crea una variable que
+>  identifica con 1 a las mujeres y con 0 a los hombres
+
+. 
+. label variable mujer "Mujer (1 = sí)" // agrega una descripción a la variable
+
+. 
+. label define mujer_etiqueta 0 "Hombre" 1 "Mujer" // define los nombres que te
+> ndrá cada valor
+
+. 
+. label values mujer mujer_etiqueta // asigna los nombres anteriores a la varia
+> ble mujer
+
+. 
+. describe, short // muestra cuántas observaciones y variables tiene la base
+
+Contains data
+ Observations:            60                  
+    Variables:             8                  
+Sorted by: 
+     Note: Dataset has changed since last saved.
+
+. 
+. * La base comenzó con 60 observaciones y 6 variables
+. * Después de crear experiencia y mujer, quedó con 60 observaciones y 8 variab
+> les
+. 
+. 
+. * --- 3. Descriptivos de variables numéricas ---
+. 
+. foreach v of local numericas {
+  2. 
+.     display _newline "===== Descriptivos de `v' =====" // muestra el nombre d
+> e la variable que se estan revisando
+  3. 
+.     summarize `v', detail // muestra información más completa de la variable,
+>  como su promedio, mínimo y máximo
+  4. }
+
+===== Descriptivos de ingreso =====
+
+                           ingreso
+-------------------------------------------------------------
+      Percentiles      Smallest
+ 1%       180000         180000
+ 5%       276000         226000
+10%       384000         276000       Obs                  55
+25%       497000         363000       Sum of wgt.          55
+
+50%       672000                      Mean           655290.9
+                        Largest       Std. dev.      209912.4
+75%       807000         959000
+90%       948000         975000       Variance       4.41e+10
+95%       975000         987000       Skewness      -.1743242
+99%      1093000        1093000       Kurtosis       2.407897
+
+===== Descriptivos de educ =====
+
+                            educ
+-------------------------------------------------------------
+      Percentiles      Smallest
+ 1%            6              6
+ 5%            7              7
+10%            9              7       Obs                  60
+25%         10.5              7       Sum of wgt.          60
+
+50%         12.5                      Mean           12.73333
+                        Largest       Std. dev.      3.328697
+75%           15             18
+90%           17             19       Variance       11.08023
+95%         18.5             20       Skewness       .1798646
+99%           20             20       Kurtosis       2.493514
+
+===== Descriptivos de edad =====
+
+                            edad
+-------------------------------------------------------------
+      Percentiles      Smallest
+ 1%           20             20
+ 5%         21.5             20
+10%         22.5             21       Obs                  60
+25%           32             22       Sum of wgt.          60
+
+50%         45.5                      Mean           44.51667
+                        Largest       Std. dev.      15.15959
+75%         57.5             68
+90%           64             69       Variance       229.8133
+95%         68.5             69       Skewness      -.0681735
+99%           70             70       Kurtosis       1.791894
+
+===== Descriptivos de experiencia =====
+
+                Experiencia potencial (años)
+-------------------------------------------------------------
+      Percentiles      Smallest
+ 1%            0              0
+ 5%            3              2
+10%            5              2       Obs                  60
+25%         10.5              4       Sum of wgt.          60
+
+50%           27                      Mean           25.78333
+                        Largest       Std. dev.       15.3182
+75%           36             48
+90%           47             50       Variance       234.6472
+95%           49             52       Skewness      -.0345026
+99%           53             53       Kurtosis       1.783916
+
+. 
+. * Los resultados que se han obtenido son:
+. * Ingreso: 55 observaciones, promedio de $655.290,9 y mediana de $672.000
+. * Educación: 60 observaciones, promedio de 12,73 años y mediana de 12,5 años
+. * Edad: 60 observaciones, promedio de 44,52 años y mediana de 45,5 años
+. * Experiencia: 60 observaciones, promedio de 25,78 años y mediana de 27 años
+. * En ingreso hay 5 datos faltantes, por eso se consideran solo 55 observacion
+> es
+. 
+. 
+. * --- 4. Personas segun tramos de educación ---
+. 
+. forvalues t = 4(4)20 {
+  2. 
+.     quietly count if educ >= `t' & educ < `t' + 4 // cuenta las personas que 
+> están dentro de cada tramo de educación
+  3. 
+.     display "Educación de `t' a " `t' + 3 " años: " r(N) " personas" // muest
+> ra cuántas personas hay en cada tramo
+  4. }
+Educación de 4 a 7 años: 4 personas
+Educación de 8 a 11 años: 19 personas
+Educación de 12 a 15 años: 25 personas
+Educación de 16 a 19 años: 10 personas
+Educación de 20 a 23 años: 2 personas
+
+. 
+. * Resultados que se obtuvieron: 4 personas tienen entre 4 y 7 años de educaci
+> ón,19 entre 8 y 11 años, 25 entre 12 y 15 años, 10 entre 16 y 19 años y 2 ent
+> re 20 y 23 años. En total se consideran las 60 personas de la base.
+. 
+. * --- 5. Programa de descriptivos por grupo ---
+. 
+. capture program drop descriptivos_grupo // elimina el programa anterior si ya
+>  existe, para evitar errores al ejecutarlo nuevamente
+
+. program define descriptivos_grupo
+  1.     display _newline "=== Descriptivos por `1' ===" // muestra el grupo qu
+> e estamos analizando
+  2.     tabulate `1' // muestra cuántas personas hay en cada categoría del gru
+> po
+  3.     tabstat ingreso educ, by(`1') statistics(mean sd n) // muestra el prom
+> edio, la desviación estándar y la cantidad de datos por grupo
+  4. end
+
+. * Aplicar el programa a los grupos definidos al inicio
+. 
+. foreach g of local grupos {
+  2.     descriptivos_grupo `g' // ejecuta el programa para cada grupo de la li
+> sta
+  3. }
+
+=== Descriptivos por sector ===
+
+       sector |      Freq.     Percent        Cum.
+--------------+-----------------------------------
+  Agricultura |         13       21.67       21.67
+     Comercio |          6       10.00       31.67
+ Construcción |          5        8.33       40.00
+    Educación |          8       13.33       53.33
+    Industria |         11       18.33       71.67
+    Servicios |         17       28.33      100.00
+--------------+-----------------------------------
+        Total |         60      100.00
+
+Summary statistics: Mean, SD, N
+Group variable: sector 
+
+       sector |   ingreso      educ
+--------------+--------------------
+  Agricultura |  447846.2  12.30769
+              |  156716.2  3.473342
+              |        13        13
+--------------+--------------------
+     Comercio |  523833.3  11.33333
+              |  135666.4  4.546061
+              |         6         6
+--------------+--------------------
+ Construcción |    520800        10
+              |  115694.4  3.391165
+              |         5         5
+--------------+--------------------
+    Educación |  908857.1     16.25
+              |  117920.1  2.434866
+              |         7         8
+--------------+--------------------
+    Industria |  697888.9  13.27273
+              |  154652.4  2.412091
+              |         9        11
+--------------+--------------------
+    Servicios |    788600  12.35294
+              |  112702.4  2.548067
+              |        15        17
+--------------+--------------------
+        Total |  655290.9  12.73333
+              |  209912.4  3.328697
+              |        55        60
+-----------------------------------
+
+=== Descriptivos por region ===
+
+       region |      Freq.     Percent        Cum.
+--------------+-----------------------------------
+    Araucanía |         11       18.33       18.33
+       Biobío |         10       16.67       35.00
+        Maule |         12       20.00       55.00
+Metropolitana |         12       20.00       75.00
+        Ñuble |         15       25.00      100.00
+--------------+-----------------------------------
+        Total |         60      100.00
+
+Summary statistics: Mean, SD, N
+Group variable: region 
+
+       region |   ingreso      educ
+--------------+--------------------
+    Araucanía |    638600  12.27273
+              |  238927.8   4.07654
+              |        10        11
+--------------+--------------------
+       Biobío |    633200      12.3
+              |  190041.4  2.110819
+              |        10        10
+--------------+--------------------
+        Maule |  659272.7  13.33333
+              |  217151.6  3.284491
+              |        11        12
+--------------+--------------------
+Metropolitana |  637636.4  12.91667
+              |  196989.5  3.315483
+              |        11        12
+--------------+--------------------
+        Ñuble |  696692.3  12.73333
+              |  232279.4  3.769552
+              |        13        15
+--------------+--------------------
+        Total |  655290.9  12.73333
+              |  209912.4  3.328697
+              |        55        60
+-----------------------------------
+
+=== Descriptivos por genero ===
+
+     genero |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          F |         29       48.33       48.33
+          M |         31       51.67      100.00
+------------+-----------------------------------
+      Total |         60      100.00
+
+Summary statistics: Mean, SD, N
+Group variable: genero 
+
+genero |   ingreso      educ
+-------+--------------------
+     F |  636296.3  12.96552
+       |  224593.3  3.458765
+       |        27        29
+-------+--------------------
+     M |  673607.1  12.51613
+       |  197088.3  3.244184
+       |        28        31
+-------+--------------------
+ Total |  655290.9  12.73333
+       |  209912.4  3.328697
+       |        55        60
+----------------------------
+
+. 
+. * Resultados obtenidos por sector:
+. * Agricultura: 13 personas, ingreso promedio de $447.846 y educación de 12,31
+>  años
+. * Comercio: 6 personas, ingreso promedio de $523.833 y educación de 11,33 año
+> s
+. * Construcción: 5 personas, ingreso promedio de $520.800 y educación de 10 añ
+> os
+. * Educación: 8 personas, ingreso promedio de $908.857 y educación de 16,25 añ
+> os
+. * Industria: 11 personas, ingreso promedio de $697.889 y educación de 13,27 a
+> ños
+. * Servicios: 17 personas, ingreso promedio de $788.600 y educación de 12,35 a
+> ños
+. * Educación presenta el mayor ingreso promedio y Agricultura el menor.
+. * En algunos sectores hay datos de ingreso faltantes, por eso la cantidad usa
+> da para calcular el promedio puede ser menor
+. 
+. * Resultados obtenidos por región:
+. * Araucanía: 11 personas, ingreso promedio de $638.600 y educación de 12,27 a
+> ños
+. * Biobío: 10 personas, ingreso promedio de $633.200 y educación de 12,3 años
+. * Maule: 12 personas, ingreso promedio de $659.273 y educación de 13,33 años
+. * Metropolitana: 12 personas, ingreso promedio de $637.636 y educación de 12,
+> 92 años.
+. * Ñuble: 15 personas, ingreso promedio de $696.692 y educación de 12,73 años
+. * Ñuble presenta el mayor ingreso promedio entre las regiones analizadas
+. * También aquí hay algunos ingresos faltantes, por lo que los promedios consi
+> deran menos observaciones que el total de personas de cada región
+. 
+. * Resultados obtenidos por género:
+. * Mujeres: 29 personas, ingreso promedio de $636.296 y educación de 12,97 año
+> s
+. * Hombres: 31 personas, ingreso promedio de $673.607 y educación de 12,52 año
+> s
+. * En esta muestra, los hombres presentan un ingreso promedio mayor que las mu
+> jeres
+. * Para calcular los promedios de ingreso se consideran 27 mujeres y 28 hombre
+> s, debido a los datos faltantes
+. 
+. 
+. * --- 6. Variable temporal para trabajar con ingresos ---
+. 
+. tempvar ing_miles // crea una variable temporal que stata elimina automáticam
+> ente cuando termina el do-file
+
+. 
+. generate `ing_miles' = ingreso / 1000 // convierte los ingresos a miles de pe
+> sos
+(5 missing values generated)
+
+. 
+. summarize `ing_miles' // muestra un resumen de los ingresos expresados en mil
+> es de pesos
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+    __000000 |         55    655.2909    209.9124        180       1093
+
+. 
+. * Resultados que se obtuvieron: se consideran 55 observaciones porque hay 5 i
+> ngresos faltantes
+. * El ingreso promedio es de $655,29, la desviación estándar es de $209,91 y e
+> l ingreso mínimo es de $180.000 y el máximo de $1.093
+. * Se utiliza tempvar para que esta variable temporal no quede guardada en la 
+> base de datos
+. 
+. 
+. * --- 7. Personas con ingresos mayores al umbral ---
+. 
+. count if ingreso > $umbral & !missing(ingreso) // cuenta las personas que tie
+> nen ingresos mayores al valor definido al inicio, excluyendo los datos faltan
+> tes
+  41
+
+. * Resultados que se obtuvieron: 41 personas tienen ingresos superiores a $500
+> .000
+. * Se excluyen los 5 ingresos faltantes, por lo que el conteo considera solo d
+> atos disponibles.
+. * Se utiliza !missing(ingreso) para excluir los ingresos faltantes, sin esta 
+> condición, stata podria contar los valores faltantes como si fueran mayores a
+> l umbral que utiliza el valor de $500.000 que se definio en los parametros de
+> l inicio, porque los considera superiores a cualquier número
+. 
+. 
+. * --- 8. Modelos de regresión ---
+. 
+. quietly regress `depvar' `controles' // estima el primer modelo usando ingres
+> o como variable dependiente y educación y experiencia como controles donde lo
+> s analiza 
+
+. 
+. estimates store m1 // guarda los resultados del primer modelo
+
+. 
+. quietly regress `depvar' `controles' i.mujer // estima el segundo modelo agre
+> gando el género como variable explicativa, la cual es la variable mujer para 
+> considerar las diferencias de ingreso según género
+
+. 
+. estimates store m2 // guarda los resultados del segundo modelo
+
+. 
+. estimates table m1 m2, b(%9.0f) se stats(N r2) stfmt(%5.3f) // compara los co
+> eficientes, errores estándar, cantidad de observaciones y R cuadrado de ambos
+>  modelos mostrando los resultados de m1 y m2
+
+--------------------------------------
+    Variable |    m1          m2      
+-------------+------------------------
+        educ |     42019       42246  
+             |      6393        6355  
+ experiencia |      -115        -517  
+             |      1415        1440  
+             |
+       mujer |
+      Mujer  |                -55686  
+             |                 43302  
+             |
+       _cons |    124160      158713  
+             |     94837       98002  
+-------------+------------------------
+           N |        55          55  
+          r2 |     0.458       0.475  
+--------------------------------------
+                          Legend: b/se
+
+. 
+. display "Coeficiente de educación: " _b[educ] // muestra el coeficiente de ed
+> ucación del segundo modelo, ya que el display esta despues de la segunda regr
+> esión
+Coeficiente de educación: 42245.764
+
+. 
+. * Resultados que se obtuvieron:
+. * En el modelo 1, educación presenta un coeficiente de $42.019, mientras que 
+> en el modelo 2, el coeficiente aumenta a $42.246 al agregar la variable mujer
+. * Esto quiere decir que un año adicional de educación se relaciona con un ing
+> reso mayor, manteniendo constantes las demas variables
+. * En el segundo modelo, el coeficiente de mujer es -$55.686, lo que significa
+>  un ingreso estimado menor respecto de los hombres
+. * El R cuadrado aumenta de 0,458 a 0,475, por lo que el segundo modelo explic
+> a una proporción ligeramente mayor de las diferencias de ingreso
+. * Ambos modelos consideran 55 observaciones
+. * El coeficiente de mujer no es estadísticamente significativo al 5 %, por lo
+>  que no se puede afirmar que exista una diferencia significativa de ingresos 
+> por género en este modelo
+. 
+. 
+. 
+. * --- 9. Regresión por sector y exportación de resultados ---
+. 
+. levelsof sector, local(sectores) // obtiene los nombres de los sectores y los
+>  guarda en una macro local
+`"Agricultura"' `"Comercio"' `"Construcción"' `"Educación"' `"Industria"' `"Ser
+> vicios"'
+
+. 
+. local n : word count `sectores' // cuenta cuántos sectores hay
+
+. 
+. matrix resultados = J(`n', 3, .) // crea una matriz con una fila por sector y
+>  tres columnas para guardar los resultados
+
+. 
+. local i = 1 // indica la primera fila de la matriz
+
+. 
+. foreach s of local sectores {
+  2. 
+.     quietly regress ingreso educ if sector == "`s'" // estima la relación ent
+> re ingreso y educación para cada sector
+  3. 
+.     matrix resultados[`i', 1] = _b[educ] // guarda el coeficiente de educació
+> n
+  4.     matrix resultados[`i', 2] = _se[educ] // guarda el error estándar del 
+> coeficiente
+  5.     matrix resultados[`i', 3] = e(N) // guarda la cantidad de observacione
+> s utilizadas
+  6. 
+.     local ++i // pasa a la siguiente fila de la matriz
+  7. }
+
+. 
+. putexcel set "output/tarea_t5_por_sector.xlsx", replace // crea el archivo Ex
+> cel y reemplaza uno anterior si existe
+note: file will be replaced when the first putexcel command is issued.
+
+. 
+. putexcel A1=("Sector") B1=("Coeficiente educación") C1=("Error estándar") D1=
+> ("Observaciones") // escribe los encabezados de las columnas
+file output/tarea_t5_por_sector.xlsx saved
+
+. 
+. local i = 2 // indica la segunda fila de Excel, después de los encabezados
+
+. 
+. foreach s of local sectores {
+  2.     putexcel A`i' = ("`s'") // escribe el nombre del sector
+  3.     local ++i // pasa a la siguiente fila de Excel
+  4. }
+file output/tarea_t5_por_sector.xlsx saved
+file output/tarea_t5_por_sector.xlsx saved
+file output/tarea_t5_por_sector.xlsx saved
+file output/tarea_t5_por_sector.xlsx saved
+file output/tarea_t5_por_sector.xlsx saved
+file output/tarea_t5_por_sector.xlsx saved
+
+. 
+. putexcel B2 = matrix(resultados) // exporta los resultados de la matriz a Exc
+> el
+file output/tarea_t5_por_sector.xlsx saved
+
+. 
+. * Resultados que se obtuvieron:
+. * Se realizaron regresiones para los seis sectores de la base de datos
+. * Todos los sectores presentan una relación positiva entre educación e ingres
+> o
+. * Industria presenta el mayor coeficiente de educación, con $42.712,64.
+. * Construcción presenta el menor coeficiente, con $23.782,61
+. * Se guardaron los coeficientes de educación, sus errores estándar y la canti
+> dad de observaciones
+. * Los resultados se exportaron correctamente al archivo Excel tarea_t5_por_se
+> ctor.xlsx
 . 
 end of do-file
 
