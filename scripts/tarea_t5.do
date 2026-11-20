@@ -21,6 +21,8 @@ local depvar "ingreso" // variable que quiero analizar
 local numericas "ingreso educ edad experiencia" // variables numericas que usare para los descriptivos
 local controles "educ experiencia" // variables que usare como controles en las regresiones 
 local grupos "sector region genero" // grupos que analizare por separado
+local educvar "educ"
+local sectorvar "sector"
 
 global umbral = 500000 // valor de ingreso que usare como referencia para hacer un filtro 
 
@@ -129,7 +131,7 @@ summarize `ing_miles' // muestra un resumen de los ingresos expresados en miles 
 * Resultados que se obtuvieron: se consideran 55 observaciones porque hay 5 ingresos faltantes
 * El ingreso promedio es de 655,29 miles de pesos y la desviación estándar de 209,91 miles de pesos
 * El ingreso mínimo es de 180 mil pesos y el máximo de 1.093 mil pesos
-* Se utiliza tempvar para crear una variable temporal que stata elimina automáticamente cuando termina la ejecución del do-file
+* Se utiliza tempvar para crear una variable temporal que stata elimina automáticamente cuando termina el ámbito en que se utiliza
 
 
 * --- 7. Personas con ingresos mayores al umbral ---
@@ -176,10 +178,10 @@ local i = 1 // indica la primera fila de la matriz
 
 foreach s of local sectores {
 
-    quietly regress ingreso educ if sector == "`s'" // estima la relación entre ingreso y educación para cada sector
+    quietly regress `depvar' `educvar' if `sectorvar' == "`s'" // estima la relación entre ingreso y educación para cada sector
 
-    matrix resultados[`i', 1] = _b[educ] // guarda el coeficiente de educación
-    matrix resultados[`i', 2] = _se[educ] // guarda el error estándar del coeficiente
+    matrix resultados[`i', 1] = _b[`educvar'] // guarda el coeficiente de educación
+    matrix resultados[`i', 2] = _se[`educvar'] // guarda el error estándar del coeficiente
     matrix resultados[`i', 3] = e(N) // guarda la cantidad de observaciones utilizadas
 
     local ++i // pasa a la siguiente fila de la matriz
@@ -210,8 +212,9 @@ putexcel B2 = matrix(resultados) // exporta los resultados de la matriz a Excel
 * --- 10. Interpretación general de los resultados ---
 
 * Los resultados muestran una relación positiva entre educación e ingreso
-* En el modelo 2, un año adicional de educación se asocia con un ingreso mayor de aproximadamente $42.246, manteniendo constantes las demás variables, al agregar la variable mujer, el coeficiente de educación aumenta levemente respecto al modelo 1
-*El coeficiente de mujer es negativo, pero no es estadísticamente significativo al 5 %
+* En el modelo 2, un año adicional de educación se asocia con un ingreso mayor de aproximadamente $42.246, manteniendo constantes las demás variables 
+* Al agregar la variable mujer, el coeficiente de educación aumenta levemente respecto al modelo 1
+* El coeficiente de mujer es negativo, pero no es estadísticamente significativo al 5 %
 * Por sector, Industria presenta el mayor coeficiente de educación y Construcción el menor
 * Los resultados por sector deben interpretarse con cuidado, ya que las muestras son pequeñas. Además, existen datos faltantes en la variable ingreso, por lo que no se utilizan todas las observaciones.
 * Estos resultados muestran relaciones entre las variables, pero no permiten afirmar que la educación cause directamente mayores ingresos.
